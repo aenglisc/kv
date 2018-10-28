@@ -1,9 +1,6 @@
 start:
 	docker-compose up -d
 
-start-interactive:
-	docker-compose run app iex -S mix
-
 stop:
 	docker-compose down
 
@@ -12,6 +9,9 @@ build:
 
 install:
 	docker-compose run --rm app mix deps.get
+
+start-interactive:
+	docker-compose run --rm app iex -S mix
 
 test:
 	docker-compose run --rm app mix test
