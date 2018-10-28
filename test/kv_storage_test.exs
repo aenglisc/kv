@@ -2,7 +2,15 @@ defmodule KvTest.Storage do
   use ExUnit.Case
   alias Kv.Storage
 
-  describe "storage CRUD" do
+  @storage_file Application.get_env(:kv, :storage_file)
+
+  setup do
+    on_exit fn ->
+      File.rm @storage_file
+    end
+  end
+
+  describe "storage api" do
     test "create" do
       assert {:ok, {"a", 1}} = Storage.create("a", 1)
       assert {:error, :already_exists} = Storage.create("a", 2)
@@ -20,7 +28,8 @@ defmodule KvTest.Storage do
 
     test "read_ttl" do
       assert {:ok, {"d", 1}} = Storage.create("d", 1, 10)
-      assert {:ok, ttl} when ttl <= 10 = Storage.read_ttl("d")
+      assert {:ok, ttl} = Storage.read_ttl("d")
+      assert ttl <= 10
       Process.sleep(10)
       assert {:error, :not_found} = Storage.read_ttl("d")
       assert {:ok, {"d", 1}} = Storage.create("d", 1)
@@ -29,6 +38,7 @@ defmodule KvTest.Storage do
 
     test "update" do
       assert {:ok, {"e", 1}} = Storage.create("e", 1)
+      assert {:ok, :infinity} = Storage.read_ttl("e")
       assert {:ok, {"e", 2}} = Storage.update("e", 2, 10)
       assert {:ok, 2} = Storage.read("e")
       Process.sleep(10)
