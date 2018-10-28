@@ -2,6 +2,7 @@ defmodule KvTest.Storage do
   use ExUnit.Case
   alias Kv.Storage
 
+  @kv Application.get_env(:kv, :storage)
   @storage_file Application.get_env(:kv, :storage_file)
 
   describe "storage api" do
@@ -56,8 +57,12 @@ defmodule KvTest.Storage do
       end
     end
 
-    test "table is persisted" do
+    test "table is persisted, outdated values are removed" do
+      Storage.create("ttl_test", "test", 1)
+      Process.sleep(1)
+      assert [{"ttl_test", "test", _}] = :ets.lookup(@kv, "ttl_test")
       assert :ok = Storage.clean_ttl_and_persist
+      assert [] = :ets.lookup(@kv, "ttl_test")
       assert File.exists?(@storage_file)
     end
   end
