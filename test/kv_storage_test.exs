@@ -4,12 +4,6 @@ defmodule KvTest.Storage do
 
   @storage_file Application.get_env(:kv, :storage_file)
 
-  setup do
-    on_exit fn ->
-      File.rm @storage_file
-    end
-  end
-
   describe "storage api" do
     test "create" do
       assert {:ok, {"a", 1}} = Storage.create("a", 1)
