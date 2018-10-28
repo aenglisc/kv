@@ -3,6 +3,7 @@ defmodule KvTest do
 
   @port Application.get_env(:kv, :port)
   @storage_file Application.get_env(:kv, :storage_file)
+  @uri "localhost:#{@port}"
 
   setup do
     on_exit fn ->
@@ -12,46 +13,52 @@ defmodule KvTest do
 
   describe "http api" do
     test "/" do
-      assert {"Usage:" <> _, _} = System.cmd("curl", ["-s", "localhost:#{@port}"])
+      assert "Usage:" <> _ = curl("GET", "/")
     end
 
     test "not found" do
-      assert {"Are you lost?", _} = System.cmd("curl", ["-s", "localhost:#{@port}/not_found"])
+      assert "Are you lost?" = curl("GET", "/not_found")
     end
 
     test "create" do
-      assert {"{\"create\", \"create\"}", _} = System.cmd("curl", ["-s", "-X", "POST", "localhost:#{@port}/data?k=create&v=create"])
-      assert {"invalid ttl", _} = System.cmd("curl", ["-s", "-X", "POST", "localhost:#{@port}/data?k=create1&v=create1&ttl=error"])
-      assert {"already exists", _} = System.cmd("curl", ["-s", "-X", "POST", "localhost:#{@port}/data?k=create&v=create"])
+      assert "{\"create\", \"create\"}" = curl("POST", "/data", "?k=create&v=create")
+      assert "invalid ttl" = curl("POST", "/data", "?k=create&v=create&ttl=error")
+      assert "already exists" = curl("POST", "/data", "?k=create&v=create")
     end
 
     test "read" do
-      assert {"{\"read\", \"read\"}", _} = System.cmd("curl", ["-s", "-X", "POST", "localhost:#{@port}/data?k=read&v=read"])
-      assert {"{\"read1\", \"read1\"}", _} = System.cmd("curl", ["-s", "-X", "POST", "localhost:#{@port}/data?k=read1&v=read1&ttl=10"])
-      assert {"read", _} = System.cmd("curl", ["-s", "-X", "GET", "localhost:#{@port}/data/read"])
-      assert {"not found", _} = System.cmd("curl", ["-s", "-X", "GET", "localhost:#{@port}/data/nope"])
+      assert "{\"read\", \"read\"}" = curl("POST", "/data", "?k=read&v=read")
+      assert "{\"read1\", \"read1\"}" = curl("POST", "/data", "?k=read1&v=read1&ttl=10")
+      assert "read" = curl("GET", "/data/read")
+      assert "not found" = curl("GET", "/data/nope")
       Process.sleep(10)
-      assert {"not found", _} = System.cmd("curl", ["-s", "-X", "GET", "localhost:#{@port}/data/read1"])
+      assert "not found" = curl("GET", "/data/read1")
     end
 
     test "update" do
-      assert {"{\"update\", \"update\"}", _} = System.cmd("curl", ["-s", "-X", "POST", "localhost:#{@port}/data?k=update&v=update"])
-      assert {"update", _} = System.cmd("curl", ["-s", "-X", "GET", "localhost:#{@port}/data/update"])
-      assert {"{\"update\", \"updated\"}", _} = System.cmd("curl", ["-s", "-X", "PUT", "localhost:#{@port}/data?k=update&v=updated"])
-      assert {"updated", _} = System.cmd("curl", ["-s", "-X", "GET", "localhost:#{@port}/data/update"])
-      assert {"{\"update\", \"updated\"}", _} = System.cmd("curl", ["-s", "-X", "PUT", "localhost:#{@port}/data?k=update&v=updated&ttl=10"])
+      assert "{\"update\", \"update\"}" = curl("POST", "/data", "?k=update&v=update")
+      assert "update" = curl("GET", "/data/update")
+      assert "{\"update\", \"updated\"}" = curl("PUT", "/data", "?k=update&v=updated")
+      assert "updated" = curl("GET", "/data/update")
+      assert "{\"update\", \"updated\"}" = curl("PUT", "/data", "?k=update&v=updated&ttl=10")
       Process.sleep(10)
-      assert {"not found", _} = System.cmd("curl", ["-s", "-X", "GET", "localhost:#{@port}/data/update"])
+      assert "not found" = curl("GET", "/data/update")
     end
 
     test "delete" do
-      assert {"{\"delete\", \"delete\"}", _} = System.cmd("curl", ["-s", "-X", "POST", "localhost:#{@port}/data?k=delete&v=delete"])
-      assert {"{\"delete1\", \"delete1\"}", _} = System.cmd("curl", ["-s", "-X", "POST", "localhost:#{@port}/data?k=delete1&v=delete1&ttl=10"])
-      assert {"delete", _} = System.cmd("curl", ["-s", "-X", "GET", "localhost:#{@port}/data/delete"])
-      assert {"deleted", _} = System.cmd("curl", ["-s", "-X", "DELETE", "localhost:#{@port}/data/delete"])
-      assert {"not found", _} = System.cmd("curl", ["-s", "-X", "DELETE", "localhost:#{@port}/data/delete"])
+      assert "{\"delete\", \"delete\"}" = curl("POST", "/data", "?k=delete&v=delete")
+      assert "{\"delete1\", \"delete1\"}" = curl("POST", "/data", "?k=delete1&v=delete1&ttl=10")
+      assert "delete" = curl("GET", "/data/delete")
+      assert "deleted" = curl("DELETE", "/data/delete")
+      assert "not found" = curl("GET", "/data/delete")
       Process.sleep(10)
-      assert {"not found", _} = System.cmd("curl", ["-s", "-X", "DELETE", "localhost:#{@port}/data/delete1"])
+      assert "not found" = curl("GET", "/data/delete1")
     end
+  end
+
+  defp curl(method, route, query \\ "") do
+    uri = @uri <> route <> query
+    {res, _} = System.cmd("curl", ["-s", "-X", method, uri])
+    res
   end
 end
