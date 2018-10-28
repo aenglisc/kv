@@ -32,6 +32,20 @@ defmodule KvTest do
       assert conn.status == 201
       assert conn.resp_body =~ "{\"create\", \"create\"}"
 
+      conn = conn(:post, "/data", %{v: "create"})
+             |> put_req_header("content-type", @query_type)
+             |> Router.call(@opts)
+
+      assert conn.status == 422
+      assert conn.resp_body =~ "invalid key"
+
+      conn = conn(:post, "/data", %{k: "create"})
+             |> put_req_header("content-type", @query_type)
+             |> Router.call(@opts)
+
+      assert conn.status == 422
+      assert conn.resp_body =~ "invalid value"
+
       conn = conn(:post, "/data", %{k: "create", v: "create", ttl: "error"})
              |> put_req_header("content-type", @query_type)
              |> Router.call(@opts)
@@ -104,12 +118,33 @@ defmodule KvTest do
       assert conn.status == 200
       assert conn.resp_body =~ "{\"update\", \"updated\"}"
 
+      conn = conn(:put, "/data", %{v: "updated"})
+             |> put_req_header("content-type", @query_type)
+             |> Router.call(@opts)
+
+      assert conn.status == 422
+      assert conn.resp_body =~ "invalid key"
+
+      conn = conn(:put, "/data", %{k: "updated"})
+             |> put_req_header("content-type", @query_type)
+             |> Router.call(@opts)
+
+      assert conn.status == 422
+      assert conn.resp_body =~ "invalid value"
+
+      conn = conn(:put, "/data", %{k: "updated", v: "updated", ttl: "error"})
+             |> put_req_header("content-type", @query_type)
+             |> Router.call(@opts)
+
+      assert conn.status == 422
+      assert conn.resp_body =~ "invalid ttl"
+
       conn = conn(:get, "/data/update", "") |> Router.call(@opts)
 
       assert conn.status == 200
       assert conn.resp_body =~ "updated"
 
-      conn = conn(:put, "/data", %{k: "update", v: "updated", ttl: "10"})
+      conn = conn(:put, "/data", %{k: "update", ttl: "10"})
              |> put_req_header("content-type", @query_type)
              |> Router.call(@opts)
 

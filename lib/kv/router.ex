@@ -2,9 +2,9 @@ defmodule Kv.Router do
   @moduledoc """
   The router for the kev-value storage
   """
-  import Plug.Conn
   use Plug.Router
   use Plug.Debugger
+  import Plug.Conn
   require Logger
   alias Kv.Storage
 
@@ -34,13 +34,17 @@ defmodule Kv.Router do
 
   # create
   post "/data" do
-    with conn = fetch_query_params(conn),
-         {:ok, ttl} <- validate_ttl("create", conn.params),
-         %{"k" => key, "v" => value} = conn.params,
+    with params = fetch_query_params(conn).params,
+         {:ok, key}   <- get_key(params),
+         {:ok, ttl}   <- get_ttl("create", params),
+         {:ok, value} <- get_value("update", params),
          {:ok, key_value} <- Storage.create(key, value, ttl)
     do
       send_resp(conn, 201, inspect key_value)
     else
+      {:error, :invalid_key} ->
+        send_resp(conn, 422, "invalid key")
+
       {:error, :invalid_ttl} ->
         send_resp(conn, 422, "invalid ttl")
 
@@ -65,13 +69,17 @@ defmodule Kv.Router do
 
   # update
   put "/data" do
-    with conn = fetch_query_params(conn),
-         {:ok, ttl} <- validate_ttl("update", conn.params),
-         %{"k" => key, "v" => value} = conn.params,
+    with params = fetch_query_params(conn).params,
+         {:ok, key}   <- get_key(params),
+         {:ok, ttl}   <- get_ttl("update", params),
+         {:ok, value} <- get_value("update", params),
          {:ok, key_value} <- Storage.update(key, value, ttl)
     do
       send_resp(conn, 200, inspect key_value)
     else
+      {:error, :invalid_key} ->
+        send_resp(conn, 422, "invalid key")
+
       {:error, :invalid_ttl} ->
         send_resp(conn, 422, "invalid ttl")
 
@@ -98,11 +106,18 @@ defmodule Kv.Router do
     send_resp(conn, 404, "Are you lost?")
   end
 
-  defp validate_ttl("update", %{"ttl" => "nil"}), do: {:ok, nil}
-  defp validate_ttl(_method,  %{"ttl" => "infinity"}), do: {:ok, :infinity}
-  defp validate_ttl(_method,  %{"ttl" => ttl}), do: parse_ttl(ttl)
-  defp validate_ttl("create", _params), do: {:ok, :infinity}
-  defp validate_ttl("update", _params), do: {:ok, nil}
+  defp get_key(%{"k" => k}), do: {:ok, k}
+  defp get_key(_param), do: {:error, :invalid_key}
+
+  defp get_value(_method, %{"v" => v}), do: {:ok, v}
+  defp get_value("update", %{"ttl" => _ttl}), do: {:ok, nil}
+  defp get_value(_method, _param), do: {:error, :invalid_value}
+
+  defp get_ttl("update", %{"ttl" => "nil"}), do: {:ok, nil}
+  defp get_ttl(_method,  %{"ttl" => "infinity"}), do: {:ok, :infinity}
+  defp get_ttl(_method,  %{"ttl" => ttl}), do: parse_ttl(ttl)
+  defp get_ttl("create", _params), do: {:ok, :infinity}
+  defp get_ttl("update", _params), do: {:ok, nil}
 
   defp parse_ttl(ttl) do
     case Integer.parse(ttl) do
