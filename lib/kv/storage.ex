@@ -25,7 +25,6 @@ defmodule Kv.Storage do
   @spec read_ttl(binary()) :: {:ok, integer() | :infinity} | {:error, :not_found}
   defdelegate read_ttl(key), to: Logic
 
-
   @doc """
   Update a key-value pair in the storage with an assigned ttl
   TTL is nil by default

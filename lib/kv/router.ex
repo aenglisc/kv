@@ -32,7 +32,7 @@ defmodule Kv.Router do
     send_resp(conn, 200, @index_resp)
   end
 
-  # TODO: create
+  # create
   post "/data" do
     with conn = fetch_query_params(conn),
          {:ok, ttl} <- validate_ttl("create", conn.params),
