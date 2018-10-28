@@ -48,4 +48,17 @@ defmodule KvTest.Storage do
       assert {:error, :not_found} = Storage.delete("f")
     end
   end
+
+  describe "clean ttl and persist" do
+    setup do
+      on_exit fn ->
+        File.rm @storage_file
+      end
+    end
+
+    test "table is persisted" do
+      assert :ok = Storage.clean_ttl_and_persist
+      assert File.exists?(@storage_file)
+    end
+  end
 end
