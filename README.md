@@ -1,4 +1,4 @@
-# Kv
+# Kv [![Build Status](https://travis-ci.org/aenglisc/Kv.svg?branch=master)](https://travis-ci.org/aenglisc/Kv)
 
 **Test task for TenderPro: a key-value storage with an http api**
 
