@@ -29,10 +29,8 @@ defmodule Kv.Application do
       {:ok, _storage} ->
         :ok
 
-      {:error, {:read_error, {:file_error, storage_file, :enoent}}} ->
-        kv
-        |> :ets.new([:named_table, :public])
-        |> :ets.tab2file(storage_file)
+      {:error, {:read_error, {:file_error, _file, :enoent}}} ->
+        :ets.new(kv, [:named_table, :public])
 
       {:error, reason} ->
         raise reason
