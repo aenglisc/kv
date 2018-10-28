@@ -3,7 +3,6 @@ defmodule KvTest do
   use Plug.Test
   alias Kv.Router
 
-  @storage_file Application.get_env(:kv, :storage_file)
   @opts Router.init([])
   @query_type "application/x-www-form-urlencoded"
 
