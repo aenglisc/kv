@@ -1,7 +1,8 @@
 defmodule Kv.Router do
   @moduledoc """
-  The router for the kev-value storage
+  The router for the key-value storage
   """
+
   use Plug.Router
   use Plug.Debugger
   import Plug.Conn
