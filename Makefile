@@ -11,10 +11,10 @@ build:
 	docker-compose build app
 
 install:
-	docker-compose run app mix deps.get
+	docker-compose run --rm app mix deps.get
 
 test:
-	docker-compose run app mix test
+	docker-compose run --rm app mix test
 
 setup: build install
 
