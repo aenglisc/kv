@@ -20,9 +20,11 @@ defmodule KvTest.Storage do
 
     test "read_ttl" do
       assert {:ok, {"d", 1}} = Storage.create("d", 1, 10)
-      assert {:ok, 10} = Storage.read_ttl("d")
+      assert {:ok, ttl} when ttl <= 10 = Storage.read_ttl("d")
       Process.sleep(10)
       assert {:error, :not_found} = Storage.read_ttl("d")
+      assert {:ok, {"d", 1}} = Storage.create("d", 1)
+      assert {:ok, :infinity} = Storage.read_ttl("d")
     end
 
     test "update" do
@@ -42,4 +44,3 @@ defmodule KvTest.Storage do
     end
   end
 end
-
