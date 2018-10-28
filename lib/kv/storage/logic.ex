@@ -6,8 +6,15 @@ defmodule Kv.Storage.Logic do
   @kv Application.get_env(:kv, :storage)
   @storage_file Application.get_env(:kv, :storage_file)
 
-  def create(k, v, ttl) when is_integer(ttl), do: do_create({k, v, gen_ttl(ttl)})
-  def create(k, v, :infinity), do: do_create({k, v, :infinity})
+  def create(k, v, :infinity)
+  when is_binary(k) and is_binary(v) do
+    do_create({k, v, :infinity})
+  end
+
+  def create(k, v, ttl)
+  when is_binary(k) and is_binary(v) and is_integer(ttl) do
+    do_create({k, v, gen_ttl(ttl)})
+  end
 
   defp do_create({k, v, _ttl} = term) do
     now = :os.system_time(:millisecond)
@@ -28,7 +35,7 @@ defmodule Kv.Storage.Logic do
     end
   end
 
-  def read(k) do
+  def read(k) when is_binary(k) do
     now = :os.system_time(:millisecond)
     case :ets.lookup(@kv, k) do
       [{_k, v, ttl}] when ttl > now -> {:ok, v}
@@ -36,7 +43,7 @@ defmodule Kv.Storage.Logic do
     end
   end
 
-  def read_ttl(k) do
+  def read_ttl(k) when is_binary(k) do
     now = :os.system_time(:millisecond)
     case :ets.lookup(@kv, k) do
       [{_k, _v, :infinity}] -> {:ok, :infinity}
@@ -45,9 +52,40 @@ defmodule Kv.Storage.Logic do
     end
   end
 
-  def update(k, v, ttl) when is_integer(ttl), do: do_update({k, v, gen_ttl(ttl)})
-  def update(k, v, :infinity), do: do_update({k, v, :infinity})
-  def update(k, v, nil),       do: do_update({k, v, nil})
+  def update(k, v, ttl)
+  when is_binary(k) and is_binary(v) and is_integer(ttl) do
+    do_update({k, v, gen_ttl(ttl)})
+  end
+
+  def update(k, ttl, nil)
+  when is_binary(k) and is_integer(ttl) do
+    do_update({k, nil, ttl})
+  end
+
+  def update(k, :infinity, nil)
+  when is_binary(k) do
+    do_update({k, nil, :infinity})
+  end
+
+  def update(k, v, :infinity)
+  when is_binary(k) and is_binary(v) do
+    do_update({k, v, :infinity})
+  end
+
+  def update(k, v, nil)
+  when is_binary(k) and is_binary(v) do
+    do_update({k, v, nil})
+  end
+
+  def update(k, nil, ttl)
+  when is_binary(k) and is_integer(ttl) do
+    do_update({k, nil, gen_ttl(ttl)})
+  end
+
+  def update(k, nil, :infinity)
+  when is_binary(k) do
+    do_update({k, nil, :infinity})
+  end
 
   defp do_update({k, v, ttl}) do
     now = :os.system_time(:millisecond)
@@ -57,6 +95,10 @@ defmodule Kv.Storage.Logic do
 
       [{_k, _v, old_ttl}] when old_ttl <= now ->
         {:error, :not_found}
+
+      [{_k, old_v, _ttl}] when is_nil(v) ->
+        :ets.insert(@kv, {k, old_v, ttl})
+        {:ok, {k, old_v}}
 
       [{_k, _v, old_ttl}] when is_nil(ttl) ->
         :ets.insert(@kv, {k, v, old_ttl})
@@ -68,7 +110,7 @@ defmodule Kv.Storage.Logic do
     end
   end
 
-  def delete(k) do
+  def delete(k) when is_binary(k) do
     now = :os.system_time(:millisecond)
     case :ets.lookup(@kv, k) do
       [{_k, _v, ttl}] when ttl > now ->

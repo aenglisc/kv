@@ -8,9 +8,8 @@ defmodule Kv.Storage do
   @doc """
   Create a key-value pair in the storage with an assigned ttl
   TTL is infinity by default
-
   """
-  @spec create(binary(), any(), integer() | :infinity) :: {:ok, {binary(), any()}} | {:error, :already_exists}
+  @spec create(binary(), binary(), integer() | :infinity) :: {:ok, {binary(), binary()}} | {:error, :already_exists}
   defdelegate create(key, value, ttl \\ :infinity), to: Logic
 
   @doc """
@@ -29,8 +28,8 @@ defmodule Kv.Storage do
   Update a key-value pair in the storage with an assigned ttl
   TTL is nil by default
   """
-  @spec update(binary(), any(), integer() | nil) :: {:ok, {binary(), any()}} | {:error, :not_found}
-  defdelegate update(key, value, ttl \\ nil), to: Logic
+  @spec update(binary(), binary() | nil, integer() | nil | :infinity) :: {:ok, {binary(), binary()}} | {:error, :not_found}
+  defdelegate update(key, value \\ nil, ttl \\ nil), to: Logic
 
   @doc """
   Delete a key-value pair in the storage
