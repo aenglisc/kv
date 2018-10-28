@@ -24,4 +24,4 @@ kv-*.tar
 
 .elixir_ls
 
-storage.tab
+*.tab
