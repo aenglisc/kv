@@ -1,18 +1,5 @@
 defmodule Kv do
   @moduledoc """
-  Documentation for Kv.
+  Test task for TenderPro: a key-value storage with an http api
   """
-
-  @doc """
-  Hello world.
-
-  ## Examples
-
-      iex> Kv.hello()
-      :world
-
-  """
-  def hello do
-    :world
-  end
-end
+ end
